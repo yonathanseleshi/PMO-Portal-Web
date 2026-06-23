@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 import { PmoMockService } from '../../core/services/pmo-mock.service';
 
 @Component({
@@ -11,11 +12,17 @@ import { PmoMockService } from '../../core/services/pmo-mock.service';
 })
 export class HeaderComponent {
   pmoService = inject(PmoMockService);
+  private router = inject(Router);
 
   constructor() {}
 
   getCurrentUser() {
     return this.pmoService.currentUser();
+  }
+
+  logout() {
+    this.pmoService.logout();
+    this.router.navigate(['/login']);
   }
 
   toggleRole() {

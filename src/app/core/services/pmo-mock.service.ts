@@ -5,11 +5,44 @@ import { Project, StatusReport, Submission, UserSession } from '../models/pmo.mo
   providedIn: 'root'
 })
 export class PmoMockService {
+  // SSR-safe check for logged in state
+  isLoggedIn = signal<boolean>(
+    typeof window !== 'undefined' && window.localStorage
+      ? window.localStorage.getItem('pmo_logged_in') === 'true'
+      : false
+  );
+
   // Current user session (default to PMO Lead)
   currentUser = signal<UserSession>({
     username: 'Joanna (PMO Lead)',
     role: 'pmo'
   });
+
+  login(employeeId: string, role: 'pmo' | 'pm') {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      window.localStorage.setItem('pmo_logged_in', 'true');
+    }
+    this.isLoggedIn.set(true);
+
+    if (role === 'pmo') {
+      this.currentUser.set({
+        username: `${employeeId} (PMO Lead)`,
+        role: 'pmo'
+      });
+    } else {
+      this.currentUser.set({
+        username: `${employeeId} (Project Manager)`,
+        role: 'pm'
+      });
+    }
+  }
+
+  logout() {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      window.localStorage.removeItem('pmo_logged_in');
+    }
+    this.isLoggedIn.set(false);
+  }
 
   // Master projects database
   projects = signal<Project[]>([
@@ -231,6 +264,9 @@ export class PmoMockService {
   }
 
   updateProjectPhase(projectId: string, phase: 'G1' | 'G2' | 'G3' | 'G4' | 'G5', gate: number) {
+    if (gate) {
+      // Used to avoid unused parameter warning while preserving method signature
+    }
     this.projects.update(projects =>
       projects.map(p => (p.id === projectId ? { ...p, phase } : p))
     );

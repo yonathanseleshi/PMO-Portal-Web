@@ -1,0 +1,8 @@
+/* Login component styling */
+#login-page-container {
+  background-attachment: fixed;
+}
+
+input, button, label {
+  transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+}

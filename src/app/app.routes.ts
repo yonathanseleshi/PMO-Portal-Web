@@ -1,10 +1,39 @@
 import { Routes } from '@angular/router';
 import { ShellComponent } from './layout/shell/shell.component';
+import { inject } from '@angular/core';
+import { CanActivateFn, Router } from '@angular/router';
+import { PmoMockService } from './core/services/pmo-mock.service';
+
+const authGuard: CanActivateFn = () => {
+  const pmoService = inject(PmoMockService);
+  const router = inject(Router);
+
+  if (pmoService.isLoggedIn()) {
+    return true;
+  }
+  return router.createUrlTree(['/login']);
+};
+
+const loginGuard: CanActivateFn = () => {
+  const pmoService = inject(PmoMockService);
+  const router = inject(Router);
+
+  if (!pmoService.isLoggedIn()) {
+    return true;
+  }
+  return router.createUrlTree(['/dashboard']);
+};
 
 export const routes: Routes = [
   {
+    path: 'login',
+    canActivate: [loginGuard],
+    loadComponent: () => import('./features/login/login.component').then(m => m.LoginComponent)
+  },
+  {
     path: '',
     component: ShellComponent,
+    canActivate: [authGuard],
     children: [
       {
         path: '',
