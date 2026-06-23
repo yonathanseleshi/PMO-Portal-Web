@@ -1,0 +1,166 @@
+<pmo-page-header title="ITS PMO Portal Dashboard" [breadcrumbs]="['Home', 'Dashboard']">
+  <!-- Action button slot -->
+  <div actions class="flex items-center gap-2">
+    <button routerLink="/templates" class="inline-flex items-center gap-2 h-10 px-4 rounded-lg bg-[#1e5fa5] hover:bg-[#1565c0] text-white text-xs font-bold shadow-md cursor-pointer transition-colors duration-150">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-4 h-4">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+      </svg>
+      <span>Submit New Request</span>
+    </button>
+  </div>
+</pmo-page-header>
+
+<!-- Dashboard Welcome banner card -->
+<div class="mb-8">
+  <div class="bg-gradient-to-r from-[#0f2d52] to-[#1e5fa5] text-white p-6 rounded-[14px] shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative overflow-hidden">
+    <!-- Gold decorative bar -->
+    <div class="absolute left-0 top-0 bottom-0 w-1 bg-[#d4a63a]"></div>
+    
+    <div class="space-y-1 z-10">
+      <h2 class="text-xl md:text-2xl font-extrabold m-0 tracking-tight">Good morning, {{ currentUser.username }}!</h2>
+      <p class="text-xs text-[#8fa8c9] font-medium max-w-xl leading-relaxed">
+        Welcome to the Ventura County ITS Project Management Portal. You are currently logged in as a <strong>{{ currentUser.role === 'pmo' ? 'PMO Lead / Analyst' : 'Project Manager' }}</strong>. Review Active Gates, Project Tiers, and submitted deliverables.
+      </p>
+    </div>
+    <div class="bg-white/10 border border-white/10 px-4 py-2.5 rounded-lg text-xs font-semibold select-none z-10">
+      <span class="text-[#f0cf83] font-bold">Current Period:</span> FY 25/26 - Q4
+    </div>
+  </div>
+</div>
+
+<!-- Bento Grid Stats / Metrics Row -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+  <pmo-card [interactive]="true" routerLink="/projects" [topBorder]="'brand'">
+    <div class="flex items-center justify-between">
+      <div class="space-y-1">
+        <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Total Portfolio Projects</span>
+        <h3 class="text-3xl font-extrabold text-[#0f2d52] m-0">{{ totalProjects() }}</h3>
+      </div>
+      <div class="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center border border-[#eef2f6]">
+        <svg class="w-5 h-5 text-[#1e5fa5]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+        </svg>
+      </div>
+    </div>
+  </pmo-card>
+
+  <pmo-card [interactive]="true" routerLink="/submissions" [topBorder]="'accent'">
+    <div class="flex items-center justify-between">
+      <div class="space-y-1">
+        <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Submissions Queue</span>
+        <h3 class="text-3xl font-extrabold text-[#0f2d52] m-0">{{ pendingSubmissions() }}</h3>
+      </div>
+      <div class="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center border border-[#eef2f6]">
+        <svg class="w-5 h-5 text-[#d4a63a]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+        </svg>
+      </div>
+    </div>
+  </pmo-card>
+
+  <pmo-card [interactive]="true" [topBorder]="'accent'">
+    <div class="flex items-center justify-between">
+      <div class="space-y-1">
+        <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Projects At Risk</span>
+        <h3 class="text-3xl font-extrabold text-amber-600 m-0">{{ atRiskProjects() }}</h3>
+      </div>
+      <div class="w-10 h-10 rounded-full bg-amber-50 flex items-center justify-center border border-amber-100">
+        <svg class="w-5 h-5 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+        </svg>
+      </div>
+    </div>
+  </pmo-card>
+
+  <pmo-card [interactive]="true" [topBorder]="'accent'">
+    <div class="flex items-center justify-between">
+      <div class="space-y-1">
+        <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Critical Concerns</span>
+        <h3 class="text-3xl font-extrabold text-rose-600 m-0">{{ criticalProjects() }}</h3>
+      </div>
+      <div class="w-10 h-10 rounded-full bg-rose-50 flex items-center justify-center border border-rose-100">
+        <svg class="w-5 h-5 text-rose-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.75A9 9 0 015.636 5.636m12.728 12.75L5.636 5.636" />
+        </svg>
+      </div>
+    </div>
+  </pmo-card>
+</div>
+
+<!-- Main Dashboard Layout -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
+  <!-- Left/Center Columns -->
+  <div class="lg:col-span-2 flex flex-col gap-6">
+    <!-- Active Projects Panel -->
+    <pmo-card>
+      <div class="flex items-center justify-between mb-4 border-b border-slate-100 pb-3">
+        <div>
+          <h3 class="text-base font-extrabold text-[#0f2d52] m-0">My Active Projects</h3>
+          <p class="text-[11px] text-slate-400 font-medium m-0 mt-0.5">Assigned projects requiring governance milestone verification.</p>
+        </div>
+        <button routerLink="/projects" class="text-xs font-bold text-[#1e5fa5] hover:text-[#1565c0] flex items-center gap-1">
+          <span>View Registry</span>
+          <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+          </svg>
+        </button>
+      </div>
+
+      <div class="divide-y divide-slate-100">
+        @for (project of projects; track project.id) {
+          <div [routerLink]="['/projects', project.id]" class="py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-slate-50/80 px-2 rounded-lg cursor-pointer transition-colors">
+            <div class="space-y-1">
+              <div class="font-extrabold text-sm text-[#0f2d52]">{{ project.name }}</div>
+              <div class="flex flex-wrap items-center gap-2 text-xs text-slate-400">
+                <span>ID: <strong class="text-slate-600 font-medium font-mono">{{ project.id }}</strong></span>
+                <span>•</span>
+                <span>Manager: <strong class="text-slate-600 font-semibold">{{ project.manager }}</strong></span>
+                <span>•</span>
+                <span>End Date: <strong class="text-slate-600 font-medium">{{ project.endDate }}</strong></span>
+              </div>
+            </div>
+            <div class="flex items-center gap-2.5">
+              <pmo-badge [type]="'tier' + project.tier" [text]="'Tier ' + project.tier"></pmo-badge>
+              <pmo-badge [type]="'info'" [text]="'Gate ' + project.phase"></pmo-badge>
+              <pmo-rag-indicator [status]="project.ragStatus"></pmo-rag-indicator>
+            </div>
+          </div>
+        }
+      </div>
+    </pmo-card>
+  </div>
+
+  <!-- Right Sidebar Column -->
+  <div class="flex flex-col gap-6">
+    <!-- Announcements Panel -->
+    <pmo-card [topBorder]="'accent'">
+      <h3 class="text-base font-extrabold text-[#0f2d52] mb-3">PMO Announcements</h3>
+      <div class="space-y-4">
+        @for (item of announcements; track item.title) {
+          <div class="border-b border-slate-100 last:border-b-0 pb-3 last:pb-0 space-y-1">
+            <div class="text-[11px] font-bold text-amber-700 uppercase tracking-wider">{{ item.date }}</div>
+            <h4 class="text-xs font-extrabold text-[#0f2d52] m-0">{{ item.title }}</h4>
+            <p class="text-xs text-slate-500 leading-relaxed m-0">{{ item.summary }}</p>
+          </div>
+        }
+      </div>
+    </pmo-card>
+
+    <!-- Resources Highlight -->
+    <pmo-card>
+      <h3 class="text-base font-extrabold text-[#0f2d52] mb-3">Featured PMO Podcast</h3>
+      @for (podcast of podcasts; track podcast.title; let first = $first) {
+        @if (first) {
+          <div class="p-3 bg-slate-50 rounded-lg border border-[#eef2f6] space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="text-[10px] font-bold text-[#1e5fa5] bg-sky-50 px-2 py-0.5 rounded-full uppercase">Listen Now</span>
+              <span class="text-xs text-slate-400 font-semibold">{{ podcast.duration }}</span>
+            </div>
+            <h4 class="text-xs font-extrabold text-[#0f2d52] m-0">{{ podcast.title }}</h4>
+            <div class="text-[11px] text-slate-400">Presented by: <strong>{{ podcast.speaker }}</strong></div>
+          </div>
+        }
+      }
+    </pmo-card>
+  </div>
+</div>

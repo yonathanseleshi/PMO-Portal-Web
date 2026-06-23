@@ -1,0 +1,45 @@
+<div class="w-full py-4 px-2">
+  <div class="flex items-center justify-between">
+    @for (gate of gates; track gate.code; let last = $last; let i = $index) {
+      <div class="flex items-center flex-1" [class.flex-none]="last">
+        <div class="flex flex-col items-center relative z-10">
+          <div 
+            class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-xs transition-all duration-300"
+            [ngClass]="{
+              'bg-emerald-600 text-white shadow-md': isCompleted(gate.code),
+              'bg-[#1e5fa5] text-white ring-4 ring-blue-100 shadow-sm font-extrabold': isActive(gate.code),
+              'bg-slate-100 text-slate-400 border border-slate-200': !isCompleted(gate.code) && !isActive(gate.code)
+            }"
+          >
+            @if (isCompleted(gate.code)) {
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor" class="w-5 h-5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+              </svg>
+            } @else {
+              {{ gate.code }}
+            }
+          </div>
+          
+          <div class="text-center mt-3 absolute top-10 w-32 -translate-x-1/2 left-1/2">
+            <div class="text-[11px] font-bold uppercase tracking-wider text-slate-500" [class.text-[#1e5fa5]]="isActive(gate.code)">
+              {{ gate.name }}
+            </div>
+            <div class="text-[10px] text-slate-400 font-medium leading-tight mt-0.5">
+              {{ gate.desc }}
+            </div>
+          </div>
+        </div>
+
+        @if (!last) {
+          <div class="flex-1 h-0.5 mx-2 bg-slate-200 transition-all duration-300"
+               [ngClass]="{
+                 'bg-emerald-600': isCompleted(gate.code) || isCompleted(gates[i+1].code),
+                 'bg-[#1e5fa5]': isActive(gate.code) && !isCompleted(gates[i+1].code)
+               }">
+          </div>
+        }
+      </div>
+    }
+  </div>
+  <div class="h-10"></div> <!-- Spacer for absolute positioning labels -->
+</div>

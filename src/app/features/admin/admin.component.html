@@ -1,0 +1,128 @@
+<pmo-page-header title="System Administrator Panel" [breadcrumbs]="['Home', 'System Admin']"></pmo-page-header>
+
+@if (successMessage()) {
+  <div class="mb-6 p-4 bg-emerald-50 border-l-4 border-emerald-500 rounded-r-lg text-emerald-800 text-xs font-bold shadow-sm animate-fade-up">
+    {{ successMessage() }}
+  </div>
+}
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+  
+  <!-- Left Columns: Admin Register Project Form -->
+  <div class="lg:col-span-2 space-y-6">
+    <pmo-card [topBorder]="'brand'">
+      <h3 class="text-base font-extrabold text-[#0f2d52] border-b border-slate-100 pb-2 mb-4">Register New ITS Project</h3>
+      <p class="text-xs text-slate-500 font-medium mb-6">
+        Initialize a new project request into the PMO active tracking system.
+      </p>
+
+      <form (submit)="$event.preventDefault(); submitNewProject()" class="space-y-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <!-- Project Name -->
+          <div class="space-y-1">
+            <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Project Name *</label>
+            <input 
+              type="text" 
+              [(ngModel)]="projectName" 
+              name="projectName"
+              required
+              placeholder="e.g. County Fire Station SCADA Upgrade" 
+              class="w-full h-10 px-3 rounded-lg border border-[#dde2e8] text-sm text-[#0f2d52] focus:outline-none focus:border-[#1e5fa5]"
+            />
+          </div>
+
+          <!-- Project Manager -->
+          <div class="space-y-1">
+            <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Assigned PM</label>
+            <select [(ngModel)]="projectPM" name="projectPM" class="w-full h-10 px-3 rounded-lg border border-[#dde2e8] text-sm text-[#0f2d52] bg-white focus:outline-none focus:border-[#1e5fa5]">
+              <option value="Mark">Mark</option>
+              <option value="Joanna">Joanna</option>
+              <option value="Steve">Steve</option>
+              <option value="David Miller">David Miller</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Description -->
+        <div class="space-y-1">
+          <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Executive Description *</label>
+          <textarea 
+            [(ngModel)]="projectDesc" 
+            name="projectDesc"
+            required
+            rows="3" 
+            placeholder="Outline the project's strategic goals and operational scope..." 
+            class="w-full p-2.5 rounded-lg border border-[#dde2e8] text-sm text-[#0f2d52] focus:outline-none focus:border-[#1e5fa5]"
+          ></textarea>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <!-- Tier -->
+          <div class="space-y-1">
+            <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Project Tier Classification</label>
+            <select [(ngModel)]="projectTier" name="projectTier" class="w-full h-10 px-3 rounded-lg border border-[#dde2e8] text-sm text-[#0f2d52] bg-white focus:outline-none focus:border-[#1e5fa5]">
+              <option [value]="1">Tier 1 - Lightweight</option>
+              <option [value]="2">Tier 2 - Standard</option>
+              <option [value]="3">Tier 3 - Enhanced</option>
+            </select>
+          </div>
+
+          <!-- Budget -->
+          <div class="space-y-1">
+            <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Initial Approved Budget ($)</label>
+            <input 
+              type="number" 
+              [(ngModel)]="projectBudget" 
+              name="projectBudget"
+              class="w-full h-10 px-3 rounded-lg border border-[#dde2e8] text-sm text-[#0f2d52] focus:outline-none focus:border-[#1e5fa5]"
+            />
+          </div>
+
+          <!-- Dates -->
+          <div class="space-y-1">
+            <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Estimated Launch Date</label>
+            <input 
+              type="date" 
+              [(ngModel)]="projectStartDate" 
+              name="projectStartDate"
+              class="w-full h-10 px-3 rounded-lg border border-[#dde2e8] text-sm text-[#0f2d52] focus:outline-none focus:border-[#1e5fa5]"
+            />
+          </div>
+        </div>
+
+        <button 
+          type="submit" 
+          [disabled]="!projectName() || !projectDesc()"
+          class="h-10 px-6 rounded-lg bg-[#0f2d52] hover:bg-[#1e5fa5] text-white text-xs font-bold shadow-md cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        >
+          Initialize Project Request
+        </button>
+      </form>
+    </pmo-card>
+  </div>
+
+  <!-- Right Column: Status Summary -->
+  <div class="space-y-6">
+    <pmo-card [topBorder]="'accent'">
+      <h3 class="text-base font-extrabold text-[#0f2d52] mb-3">Core Administration Details</h3>
+      <p class="text-xs text-slate-500 font-medium leading-relaxed mb-4">
+        Review general portfolio diagnostics. Active records are cached in signal memory for the current session.
+      </p>
+
+      <div class="space-y-3 font-medium text-xs text-slate-600">
+        <div class="flex items-center justify-between py-2 border-b border-slate-100">
+          <span>Active Registered Projects:</span>
+          <strong class="text-slate-800 font-black">{{ projectsCount }}</strong>
+        </div>
+        <div class="flex items-center justify-between py-2 border-b border-slate-100">
+          <span>Current Active User:</span>
+          <strong class="text-[#1e5fa5] font-bold">{{ pmoService.currentUser().username }}</strong>
+        </div>
+        <div class="flex items-center justify-between py-2">
+          <span>Role Capability Level:</span>
+          <pmo-badge [type]="'tier3'" [text]="pmoService.currentUser().role === 'pmo' ? 'PMO Root' : 'Standard PM'"></pmo-badge>
+        </div>
+      </div>
+    </pmo-card>
+  </div>
+</div>

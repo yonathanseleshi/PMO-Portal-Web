@@ -1,0 +1,30 @@
+<div class="flex h-screen w-screen overflow-hidden bg-[#f3f6fa]">
+  <!-- Left Side: Sidebar Navigation -->
+  <pmo-sidebar class="hidden md:block h-full shrink-0"></pmo-sidebar>
+
+  <!-- Right Side: Content Area (Header, Civic Strip, Main Outlet, Copilot) -->
+  <div class="flex-1 flex flex-col min-w-0 h-full relative">
+    
+    <!-- Top Civic Strip (USWDS Government Style) -->
+    <div class="bg-[#08192e] text-[10px] font-extrabold tracking-[0.09em] text-[#8fa8c9] px-6 h-6 flex items-center justify-between border-b border-white/5 select-none shrink-0">
+      <span>COUNTY OF VENTURA &middot; INFORMATION TECHNOLOGY SERVICES</span>
+      <span class="text-[#d4a63a]">PROJECT MANAGEMENT OFFICE &middot; PORTAL</span>
+    </div>
+
+    <!-- Header / Navigation Bar -->
+    <pmo-header class="shrink-0"></pmo-header>
+
+    <!-- Main Working Panel (Content + Copilot) -->
+    <div class="flex-1 flex min-h-0 relative">
+      <!-- Main Content Container with vertical scroll -->
+      <div class="flex-1 overflow-y-auto vc-scroll p-6 md:p-8 bg-[#f3f6fa]">
+        <div class="max-w-[1240px] mx-auto pb-16">
+          <router-outlet></router-outlet>
+        </div>
+      </div>
+
+      <!-- Right Side Collapsible Copilot Panel -->
+      <pmo-copilot class="h-full shrink-0"></pmo-copilot>
+    </div>
+  </div>
+</div>

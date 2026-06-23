@@ -1,0 +1,32 @@
+<div class="mb-6 animate-fade-up">
+  <!-- Breadcrumbs -->
+  @if (breadcrumbs().length > 0) {
+    <nav class="flex items-center gap-1.5 text-xs text-slate-500 font-medium mb-3">
+      @for (crumb of breadcrumbs(); track crumb; let last = $last) {
+        @if (!last) {
+          <span class="hover:text-[#1e5fa5] cursor-pointer transition-colors duration-150">{{ crumb }}</span>
+          <svg class="w-3.5 h-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+          </svg>
+        } @else {
+          <span class="text-slate-800 font-semibold">{{ crumb }}</span>
+        }
+      }
+    </nav>
+  }
+
+  <!-- Page Title & Actions -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div>
+      <h1 class="text-2xl md:text-[28px] font-extrabold tracking-tight text-[#0f2d52] m-0 leading-tight">
+        {{ title() }}
+      </h1>
+      <div class="h-1 w-12 bg-[#d4a63a] rounded-full mt-2"></div>
+    </div>
+    
+    <!-- Actions Slot -->
+    <div class="flex items-center gap-3">
+      <ng-content select="[actions]"></ng-content>
+    </div>
+  </div>
+</div>

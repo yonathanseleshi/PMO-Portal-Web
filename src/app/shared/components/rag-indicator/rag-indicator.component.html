@@ -1,0 +1,16 @@
+<div class="inline-flex items-center gap-2 px-2.5 py-1 rounded-full text-xs font-semibold" [ngClass]="{
+  'bg-emerald-50 text-emerald-800 border border-emerald-200': status() === 'Green',
+  'bg-amber-50 text-amber-800 border border-amber-200': status() === 'Amber',
+  'bg-rose-50 text-rose-800 border border-rose-200': status() === 'Red'
+}">
+  <span class="w-2 h-2 rounded-full" [ngClass]="{
+    'bg-emerald-600': status() === 'Green',
+    'bg-amber-500': status() === 'Amber',
+    'bg-rose-600': status() === 'Red'
+  }"></span>
+  <span>
+    @if (status() === 'Green') { Healthy }
+    @else if (status() === 'Amber') { At Risk }
+    @else if (status() === 'Red') { Critical }
+  </span>
+</div>

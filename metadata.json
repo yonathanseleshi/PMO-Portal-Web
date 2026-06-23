@@ -1,0 +1,6 @@
+{
+  "name": "Ventura County ITS PMO Portal",
+  "description": "A project management and governance portal for the County of Ventura Information Technology Services department.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

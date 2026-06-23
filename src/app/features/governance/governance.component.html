@@ -1,0 +1,82 @@
+<pmo-page-header title="ITS Governance Framework" [breadcrumbs]="['Home', 'Governance Board']"></pmo-page-header>
+
+<!-- Two-column governance details layout -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+  
+  <!-- Left Columns: G1 to G5 lifecycle explanation -->
+  <div class="lg:col-span-2 space-y-6">
+    <pmo-card>
+      <h3 class="text-base font-extrabold text-[#0f2d52] border-b border-slate-100 pb-2 mb-4">The 5-Gate Governance Process</h3>
+      <p class="text-xs text-slate-500 font-medium mb-6">
+        Every ITS initiative follows this rigorous structure to guarantee county compliance, funding security, and quality deployment.
+      </p>
+
+      <div class="space-y-6 relative border-l border-slate-200 pl-6 ml-3">
+        @for (gate of gates; track gate.code) {
+          <div class="relative">
+            <!-- Bullet marker -->
+            <div class="absolute -left-[31px] top-0 w-4 h-4 rounded-full border-2 border-[#1e5fa5] bg-white flex items-center justify-center">
+              <div class="w-1.5 h-1.5 rounded-full bg-[#1e5fa5]"></div>
+            </div>
+            
+            <div class="space-y-2">
+              <div class="flex items-center gap-2">
+                <pmo-badge [type]="'info'" [text]="gate.code"></pmo-badge>
+                <h4 class="text-sm font-extrabold text-[#0f2d52] m-0">{{ gate.name }}</h4>
+              </div>
+              <div class="p-3 bg-slate-50/70 border border-[#eef2f6] rounded-lg text-xs space-y-1.5">
+                <div>
+                  <strong class="text-slate-400 font-bold uppercase tracking-wider text-[10px] block">Required Evidence:</strong>
+                  <span class="text-slate-600 font-medium leading-relaxed block">{{ gate.evidence }}</span>
+                </div>
+                <div>
+                  <strong class="text-[#1e5fa5] font-bold uppercase tracking-wider text-[10px] block">Gate Output:</strong>
+                  <span class="text-[#0f2d52] font-semibold block">{{ gate.output }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    </pmo-card>
+  </div>
+
+  <!-- Right Column: Governance Boards & Schedules -->
+  <div class="space-y-6">
+    <pmo-card [topBorder]="'accent'">
+      <h3 class="text-base font-extrabold text-[#0f2d52] mb-3">Governance Committees</h3>
+      <p class="text-xs text-slate-500 leading-relaxed font-medium mb-4">
+        Our boards meet regularly to evaluate project gate progression and budget requests.
+      </p>
+
+      <div class="space-y-4">
+        @for (com of committees; track com.name) {
+          <div class="p-4 bg-[#fcfdfe] rounded-xl border border-slate-100 space-y-3">
+            <h4 class="text-xs font-black text-[#0f2d52] m-0 leading-snug">{{ com.name }}</h4>
+            <div class="text-[11px] text-slate-600 leading-relaxed font-medium">
+              <strong>Mandate:</strong> {{ com.authority }}
+            </div>
+            <div class="text-[11px] text-amber-700 bg-amber-50 px-2.5 py-1 rounded-lg font-bold">
+              Schedule: {{ com.schedule }}
+            </div>
+            <div class="space-y-1">
+              <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Committee Chairs</span>
+              <div class="flex flex-wrap gap-1">
+                @for (member of com.members; track member) {
+                  <span class="text-[10px] bg-slate-100 text-slate-700 px-2 py-0.5 rounded-full font-bold">{{ member }}</span>
+                }
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    </pmo-card>
+
+    <pmo-card>
+      <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Help Desk & PM Support</h3>
+      <p class="text-xs text-slate-500 leading-relaxed m-0 font-medium">
+        Need assistance preparing your G3 Business Case or G4 Rollout evidence? Access our live chatbot or schedule a 1-on-1 consultation with a PMO Lead Analyst via the Templates view or by opening PMO Copilot.
+      </p>
+    </pmo-card>
+  </div>
+</div>

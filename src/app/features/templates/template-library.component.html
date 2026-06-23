@@ -1,0 +1,112 @@
+<pmo-page-header title="Template Library" [breadcrumbs]="['Home', 'Template Library']">
+  <div actions>
+    <button (click)="toggleCalculator()" class="inline-flex items-center gap-2 h-10 px-4 rounded-lg border border-[#dde2e8] bg-white text-[#0f2d52] hover:bg-slate-50 text-xs font-bold shadow-sm cursor-pointer transition-colors duration-150">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4 text-[#d4a63a]">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 15.75V18m-3-10.5V18m-3-3V18m3-12h.008v.008H12V6zm0 0h.008v.008H12V6zm0 0h.008v.008H12V6zm0 0h.008v.008H12V6zm0 0h.008v.008H12V6zm0 0h.008v.008H12V6zm0 0h.008v.008H12V6zm0 0h.008v.008H12V6zm0 0h.008v.008H12V6zm0 0h.008v.008H12V6zm0 0h.008v.008H12V6zm0 0h.008v.008H12V6zm0 0h.008v.008H12V6zm0 0h.008v.008H12V6zm0 0h.008v.008H12V6zm0 0h.008v.008H12V6z" />
+      </svg>
+      <span>{{ showCalculator() ? 'Hide Tier Calculator' : 'Launch Tier Calculator' }}</span>
+    </button>
+  </div>
+</pmo-page-header>
+
+<!-- Interactive Tier Calculator Form block -->
+@if (showCalculator()) {
+  <div class="mb-8 animate-fade-up">
+    <pmo-card [topBorder]="'accent'">
+      <div class="flex items-center justify-between mb-4 border-b border-slate-100 pb-2">
+        <div>
+          <h3 class="text-base font-extrabold text-[#0f2d52] m-0">Interactive Tier Calculator</h3>
+          <p class="text-[11px] text-slate-400 font-medium m-0 mt-0.5">Determine the governance level required for your project.</p>
+        </div>
+        <button (click)="resetCalculator()" class="text-xs font-bold text-slate-400 hover:text-slate-600 cursor-pointer">Reset</button>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <!-- Budget / Cost -->
+        <div class="space-y-1">
+          <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Estimated Budget / Cost</label>
+          <div class="relative">
+            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">$</span>
+            <input 
+              type="number" 
+              [(ngModel)]="budget" 
+              placeholder="0.00" 
+              class="w-full h-10 pl-7 pr-3 rounded-lg border border-[#dde2e8] text-sm text-[#0f2d52] focus:outline-none focus:border-[#1e5fa5]"
+            />
+          </div>
+        </div>
+
+        <!-- Organizational Impact -->
+        <div class="space-y-1">
+          <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Organizational Impact</label>
+          <select [(ngModel)]="impact" class="w-full h-10 px-3 rounded-lg border border-[#dde2e8] text-sm text-[#0f2d52] bg-white focus:outline-none focus:border-[#1e5fa5]">
+            <option value="low">Low - Single Department / Internal</option>
+            <option value="medium">Medium - Multi-department / Operational Change</option>
+            <option value="high">High - County-wide / Public Facing / Mission Critical</option>
+          </select>
+        </div>
+
+        <!-- Integration Complexity -->
+        <div class="space-y-1">
+          <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Integration & Security Complexity</label>
+          <select [(ngModel)]="integration" class="w-full h-10 px-3 rounded-lg border border-[#dde2e8] text-sm text-[#0f2d52] bg-white focus:outline-none focus:border-[#1e5fa5]">
+            <option value="low">Low - Standard Cloud SaaS / No Major Integration</option>
+            <option value="medium">Medium - Custom API / AD Auth / Moderate Risk</option>
+            <option value="high">High - Legacy DB / EHR / HIPAA Compliant / High Risk</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mt-6 pt-4 border-t border-slate-100">
+        <button (click)="calculateTier()" class="h-10 px-6 rounded-lg bg-[#0f2d52] hover:bg-[#1e5fa5] text-white text-xs font-bold shadow-md cursor-pointer transition-colors duration-150">
+          Calculate Tier
+        </button>
+
+        @if (calculatedTier() !== null) {
+          <div class="flex items-center gap-3 p-3 bg-[#eef4fb] rounded-lg border border-[#dbe4f0] animate-fade-up">
+            <span class="text-xs text-slate-600 font-semibold">Recommended Governance level:</span>
+            <pmo-badge [type]="'tier' + calculatedTier()" [text]="'Tier ' + calculatedTier()"></pmo-badge>
+            <span class="text-[11px] text-slate-500">
+              @if (calculatedTier() === 3) { (Enhanced oversight, detailed G1-G5 milestones and evidence required) }
+              @else if (calculatedTier() === 2) { (Standard oversight, G1-G5 milestones required) }
+              @else if (calculatedTier() === 1) { (Lightweight, simplified G1-G5 path) }
+            </span>
+          </div>
+        }
+      </div>
+    </pmo-card>
+  </div>
+}
+
+  <!-- Template Cards Grid -->
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    @for (tmpl of [
+      { id: 'T1', name: 'Project Intake Template', req: 'All Tiers', desc: 'Standard initial intake form to register a new request, define high-level objectives, and estimated project cost.' },
+      { id: 'T2', name: 'Project Charter Template', req: 'Tiers 2 & 3', desc: 'Authorized charter definition document. Requires sponsor sign-off, clear scope boundary, and risk logs.' },
+      { id: 'T3', name: 'Release Readiness Checklist', req: 'Tiers 2 & 3', desc: 'Pre-deployment verification list confirming testing, staff training, operational roll-back plan, and security audit.' },
+      { id: 'T4', name: 'Project Closure Template', req: 'Tiers 2 & 3', desc: 'Formal wrap-up sheet containing customer acceptance sign-offs, final budget audit, and lessons learned database.' }
+    ]; track tmpl.id) {
+      <pmo-card [topBorder]="'brand'">
+        <div class="space-y-4">
+          <div class="flex items-center justify-between">
+            <span class="text-[10px] font-bold text-slate-400 font-mono">{{ tmpl.id }}</span>
+            <pmo-badge [type]="tmpl.req === 'All Tiers' ? 'success' : 'info'" [text]="tmpl.req"></pmo-badge>
+          </div>
+          
+          <div>
+            <h4 class="text-sm font-extrabold text-[#0f2d52] m-0">{{ tmpl.name }}</h4>
+            <p class="text-xs text-slate-500 leading-relaxed mt-2 m-0">{{ tmpl.desc }}</p>
+          </div>
+
+          <div class="flex items-center gap-2 pt-2">
+            <button class="flex-1 h-9 rounded-lg border border-[#dde2e8] bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-bold transition-colors cursor-pointer flex items-center justify-center gap-1.5">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-4 h-4 text-slate-500">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+              </svg>
+              <span>Download (.docx)</span>
+            </button>
+          </div>
+        </div>
+      </pmo-card>
+    }
+  </div>

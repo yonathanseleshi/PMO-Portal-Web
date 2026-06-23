@@ -1,0 +1,168 @@
+<pmo-page-header title="Project Registry" [breadcrumbs]="['Home', 'Project Registry']">
+  <!-- Action button slot -->
+  <div actions class="flex items-center gap-2">
+    <div class="text-xs text-slate-400 font-semibold select-none hidden lg:block">
+      Total Matching: <strong class="text-slate-700">{{ filteredProjects().length }}</strong>
+    </div>
+  </div>
+</pmo-page-header>
+
+<!-- Filter Workspace Card -->
+<div class="mb-6">
+  <pmo-card>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <!-- SearchQuery -->
+      <div class="space-y-1">
+        <label class="text-[11px] font-bold uppercase tracking-wider text-slate-400 block">Search Projects</label>
+        <input 
+          type="text" 
+          [(ngModel)]="searchQuery" 
+          placeholder="Name, ID, or PM..." 
+          class="w-full h-10 px-3 rounded-lg border border-[#dde2e8] text-sm text-[#0f2d52] focus:outline-none focus:border-[#1e5fa5] focus:ring-2 focus:ring-blue-100"
+        />
+      </div>
+
+      <!-- Tier Filter -->
+      <div class="space-y-1">
+        <label class="text-[11px] font-bold uppercase tracking-wider text-slate-400 block">Filter Tier</label>
+        <select 
+          [(ngModel)]="selectedTier" 
+          class="w-full h-10 px-3 rounded-lg border border-[#dde2e8] text-sm text-[#0f2d52] bg-white focus:outline-none focus:border-[#1e5fa5]"
+        >
+          <option value="all">All Tiers</option>
+          <option value="1">Tier 1 - Lightweight</option>
+          <option value="2">Tier 2 - Standard</option>
+          <option value="3">Tier 3 - Enhanced</option>
+        </select>
+      </div>
+
+      <!-- Phase Filter -->
+      <div class="space-y-1">
+        <label class="text-[11px] font-bold uppercase tracking-wider text-slate-400 block">Filter Phase / Gate</label>
+        <select 
+          [(ngModel)]="selectedPhase" 
+          class="w-full h-10 px-3 rounded-lg border border-[#dde2e8] text-sm text-[#0f2d52] bg-white focus:outline-none focus:border-[#1e5fa5]"
+        >
+          <option value="all">All Gates (G1-G5)</option>
+          <option value="G1">G1 - Intake Decision</option>
+          <option value="G2">G2 - Charter Auth</option>
+          <option value="G3">G3 - Planning Approval</option>
+          <option value="G4">G4 - Release Readiness</option>
+          <option value="G5">G5 - Acceptance/Closure</option>
+        </select>
+      </div>
+
+      <!-- RAG Health Filter -->
+      <div class="space-y-1">
+        <label class="text-[11px] font-bold uppercase tracking-wider text-slate-400 block">Filter RAG Health</label>
+        <select 
+          [(ngModel)]="selectedRag" 
+          class="w-full h-10 px-3 rounded-lg border border-[#dde2e8] text-sm text-[#0f2d52] bg-white focus:outline-none focus:border-[#1e5fa5]"
+        >
+          <option value="all">All RAG States</option>
+          <option value="Green">Green - Healthy</option>
+          <option value="Amber">Amber - At Risk</option>
+          <option value="Red">Red - Critical</option>
+        </select>
+      </div>
+    </div>
+  </pmo-card>
+</div>
+
+<!-- Project Registry Table Card -->
+<pmo-card>
+  <div class="overflow-x-auto vc-scroll">
+    <table class="w-full border-collapse text-left text-sm text-slate-600">
+      <thead>
+        <tr class="border-b border-slate-100 text-[11px] font-bold uppercase tracking-wider text-slate-400 bg-slate-50/50">
+          <th (click)="setSort('id')" class="p-4 cursor-pointer hover:text-[#1e5fa5] select-none transition-colors">
+            <div class="flex items-center gap-1">
+              <span>Project ID</span>
+              @if (sortColumn() === 'id') {
+                <span>{{ sortDirection() === 'asc' ? '▲' : '▼' }}</span>
+              }
+            </div>
+          </th>
+          <th (click)="setSort('name')" class="p-4 cursor-pointer hover:text-[#1e5fa5] select-none transition-colors">
+            <div class="flex items-center gap-1">
+              <span>Project Name</span>
+              @if (sortColumn() === 'name') {
+                <span>{{ sortDirection() === 'asc' ? '▲' : '▼' }}</span>
+              }
+            </div>
+          </th>
+          <th (click)="setSort('tier')" class="p-4 cursor-pointer hover:text-[#1e5fa5] select-none transition-colors">
+            <div class="flex items-center gap-1">
+              <span>Tier</span>
+              @if (sortColumn() === 'tier') {
+                <span>{{ sortDirection() === 'asc' ? '▲' : '▼' }}</span>
+              }
+            </div>
+          </th>
+          <th (click)="setSort('phase')" class="p-4 cursor-pointer hover:text-[#1e5fa5] select-none transition-colors">
+            <div class="flex items-center gap-1">
+              <span>Gate Position</span>
+              @if (sortColumn() === 'phase') {
+                <span>{{ sortDirection() === 'asc' ? '▲' : '▼' }}</span>
+              }
+            </div>
+          </th>
+          <th (click)="setSort('ragStatus')" class="p-4 cursor-pointer hover:text-[#1e5fa5] select-none transition-colors">
+            <div class="flex items-center gap-1">
+              <span>RAG Health</span>
+              @if (sortColumn() === 'ragStatus') {
+                <span>{{ sortDirection() === 'asc' ? '▲' : '▼' }}</span>
+              }
+            </div>
+          </th>
+          <th (click)="setSort('manager')" class="p-4 cursor-pointer hover:text-[#1e5fa5] select-none transition-colors">
+            <div class="flex items-center gap-1">
+              <span>PM</span>
+              @if (sortColumn() === 'manager') {
+                <span>{{ sortDirection() === 'asc' ? '▲' : '▼' }}</span>
+              }
+            </div>
+          </th>
+          <th (click)="setSort('lastStatusReportDate')" class="p-4 cursor-pointer hover:text-[#1e5fa5] select-none transition-colors">
+            <div class="flex items-center gap-1">
+              <span>Last Status Report</span>
+              @if (sortColumn() === 'lastStatusReportDate') {
+                <span>{{ sortDirection() === 'asc' ? '▲' : '▼' }}</span>
+              }
+            </div>
+          </th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100">
+        @for (project of filteredProjects(); track project.id) {
+          <tr [routerLink]="['/projects', project.id]" class="hover:bg-slate-50/70 cursor-pointer transition-colors">
+            <td class="p-4 font-mono font-bold text-xs text-slate-500 whitespace-nowrap">{{ project.id }}</td>
+            <td class="p-4 font-extrabold text-sm text-[#0f2d52]">{{ project.name }}</td>
+            <td class="p-4">
+              <pmo-badge [type]="'tier' + project.tier" [text]="'Tier ' + project.tier"></pmo-badge>
+            </td>
+            <td class="p-4">
+              <pmo-badge [type]="'info'" [text]="'Gate ' + project.phase"></pmo-badge>
+            </td>
+            <td class="p-4">
+              <pmo-rag-indicator [status]="project.ragStatus"></pmo-rag-indicator>
+            </td>
+            <td class="p-4 font-semibold text-slate-700">{{ project.manager }}</td>
+            <td class="p-4 font-medium text-slate-500 font-mono text-xs">{{ project.lastStatusReportDate }}</td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="7" class="p-12 text-center text-slate-400 font-medium">
+              <div class="flex flex-col items-center gap-3">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-12 h-12 text-slate-300">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+                </svg>
+                <span>No projects match the selected filters or query.</span>
+              </div>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</pmo-card>

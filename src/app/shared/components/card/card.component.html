@@ -1,0 +1,17 @@
+<div 
+  class="bg-white rounded-[14px] border border-[#eef2f6] shadow-sm overflow-hidden transition-all duration-200"
+  [ngClass]="{
+    'hover:shadow-md hover:-translate-y-0.5 cursor-pointer': interactive(),
+    'border-l-4': ragBorder() !== null,
+    'border-l-emerald-600': ragBorder() === 'Green',
+    'border-l-amber-500': ragBorder() === 'Amber',
+    'border-l-rose-600': ragBorder() === 'Red',
+    'border-t-3': topBorder() !== null,
+    'border-t-[#0f2d52]': topBorder() === 'brand',
+    'border-t-[#d4a63a]': topBorder() === 'accent'
+  }"
+>
+  <div class="p-5">
+    <ng-content></ng-content>
+  </div>
+</div>
