@@ -1,47 +1,36 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, computed, inject, signal } from '@angular/core';
 import { Project, StatusReport, Submission, UserSession } from '../models/pmo.model';
+import { AuthService } from './auth/auth';
 
 @Injectable({
   providedIn: 'root'
 })
 export class PmoMockService {
-  // SSR-safe check for logged in state
-  isLoggedIn = signal<boolean>(
-    typeof window !== 'undefined' && window.localStorage
-      ? window.localStorage.getItem('pmo_logged_in') === 'true'
-      : false
-  );
+  private auth = inject(AuthService);
 
-  // Current user session (default to PMO Lead)
-  currentUser = signal<UserSession>({
-    username: 'Joanna (PMO Lead)',
-    role: 'pmo'
+  /**
+   * Authentication state is owned by {@link AuthService}. These members remain
+   * as backward-compatible bridges so existing role-aware feature screens
+   * (which expect a simple `{ username, role: 'pmo' | 'pm' }` shape) continue
+   * to work against the canonical session.
+   */
+  isLoggedIn = computed<boolean>(() => this.auth.isLoggedIn());
+
+  // Derived from the canonical AuthService session. PMO Lead / PMO Analyst map
+  // to 'pmo'; all other roles map to 'pm' for legacy UI conditionals.
+  currentUser = computed<UserSession>(() => {
+    const session = this.auth.session();
+    if (!session) {
+      return { username: '', role: 'pm' };
+    }
+    return {
+      username: session.displayName,
+      role: this.auth.isPMOUser() ? 'pmo' : 'pm'
+    };
   });
 
-  login(employeeId: string, role: 'pmo' | 'pm') {
-    if (typeof window !== 'undefined' && window.localStorage) {
-      window.localStorage.setItem('pmo_logged_in', 'true');
-    }
-    this.isLoggedIn.set(true);
-
-    if (role === 'pmo') {
-      this.currentUser.set({
-        username: `${employeeId} (PMO Lead)`,
-        role: 'pmo'
-      });
-    } else {
-      this.currentUser.set({
-        username: `${employeeId} (Project Manager)`,
-        role: 'pm'
-      });
-    }
-  }
-
   logout() {
-    if (typeof window !== 'undefined' && window.localStorage) {
-      window.localStorage.removeItem('pmo_logged_in');
-    }
-    this.isLoggedIn.set(false);
+    this.auth.logout().subscribe();
   }
 
   // Master projects database

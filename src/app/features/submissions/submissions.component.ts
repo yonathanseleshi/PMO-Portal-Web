@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { PmoMockService } from '../../core/services/pmo-mock.service';
+import { PmoMockService } from '../../services/pmo-mock.service';
 import { CardComponent } from '../../shared/components/card/card.component';
 import { BadgeComponent } from '../../shared/components/badge/badge.component';
 import { PageHeaderComponent } from '../../shared/components/page-header/page-header.component';

@@ -1,8 +1,10 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ReactiveFormsModule, FormGroup, FormControl, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
-import { PmoMockService } from '../../core/services/pmo-mock.service';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
+import { AuthService } from '../../services/auth/auth';
+import { AuthDTO } from '../../dto/auth.dto';
+import { UserRole, ROLE_LABELS } from '../../models/user-session.model';
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -12,24 +14,26 @@ import { PmoMockService } from '../../core/services/pmo-mock.service';
   styleUrl: './login.component.css'
 })
 export class LoginComponent {
-  private pmoService = inject(PmoMockService);
+  private auth = inject(AuthService);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
+  private fb = inject(FormBuilder);
 
-  loginForm = new FormGroup({
-    employeeId: new FormControl('', [
-      Validators.required,
-      Validators.pattern(/^VC\d{4,6}$|^[a-zA-Z0-9_\-.]{3,20}$/)
-    ]),
-    password: new FormControl('', [
-      Validators.required,
-      Validators.minLength(6)
-    ]),
-    role: new FormControl<'pmo' | 'pm'>('pmo', [Validators.required])
+  isLoading = signal(false);
+  errorMessage = signal('');
+
+  /** Demo roles offered for prototype quick sign-in. */
+  readonly demoRoles: { role: UserRole; label: string }[] = [
+    { role: UserRole.PMOLead, label: ROLE_LABELS[UserRole.PMOLead] },
+    { role: UserRole.PMOAnalyst, label: ROLE_LABELS[UserRole.PMOAnalyst] },
+    { role: UserRole.GovernanceBoard, label: ROLE_LABELS[UserRole.GovernanceBoard] },
+    { role: UserRole.ProjectManager, label: ROLE_LABELS[UserRole.ProjectManager] },
+  ];
+
+  loginForm = this.fb.group({
+    employeeId: ['', [Validators.required]],
+    password: ['', [Validators.required, Validators.minLength(6)]],
   });
-
-  errorMessage = '';
-
-  constructor() {}
 
   get employeeId() {
     return this.loginForm.get('employeeId');
@@ -39,40 +43,42 @@ export class LoginComponent {
     return this.loginForm.get('password');
   }
 
-  get role() {
-    return this.loginForm.get('role');
-  }
-
-  prepopulate(role: 'pmo' | 'pm') {
-    if (role === 'pmo') {
-      this.loginForm.patchValue({
-        employeeId: 'VC2061',
-        password: 'pmoPassword123',
-        role: 'pmo'
-      });
-    } else {
-      this.loginForm.patchValue({
-        employeeId: 'VC4192',
-        password: 'pmPassword123',
-        role: 'pm'
-      });
-    }
-  }
-
-  onSubmit() {
+  /** Production path — authenticate against the VCAuth API. */
+  onSubmit(): void {
     if (this.loginForm.invalid) {
       this.loginForm.markAllAsTouched();
-      this.errorMessage = 'Please fix the errors in the form above.';
+      this.errorMessage.set('Please fix the errors above before signing in.');
       return;
     }
 
-    const employeeId = this.loginForm.value.employeeId || '';
-    const selectedRole = this.loginForm.value.role || 'pmo';
+    this.isLoading.set(true);
+    this.errorMessage.set('');
 
-    // Store login status and role in mock service
-    this.pmoService.login(employeeId, selectedRole);
+    const authDTO = new AuthDTO();
+    authDTO.userId = this.loginForm.value.employeeId || '';
+    authDTO.username = authDTO.userId;
+    authDTO.password = this.loginForm.value.password || '';
 
-    // Navigate to dashboard
-    this.router.navigate(['/dashboard']);
+    this.auth.loginWithVcAuth(authDTO).subscribe({
+      next: () => {
+        this.isLoading.set(false);
+        this.redirectAfterLogin();
+      },
+      error: (error: Error) => {
+        this.isLoading.set(false);
+        this.errorMessage.set(error.message || 'Authentication failed. Please try again.');
+      },
+    });
+  }
+
+  /** Prototype path — sign in instantly as a demo role (no backend needed). */
+  demoSignIn(role: UserRole): void {
+    this.errorMessage.set('');
+    this.auth.demoLogin(role).subscribe(() => this.redirectAfterLogin());
+  }
+
+  private redirectAfterLogin(): void {
+    const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl') || '/dashboard';
+    this.router.navigateByUrl(returnUrl);
   }
 }

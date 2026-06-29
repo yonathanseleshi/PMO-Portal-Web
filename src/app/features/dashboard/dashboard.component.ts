@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
-import { PmoMockService } from '../../core/services/pmo-mock.service';
+import { PmoMockService } from '../../services/pmo-mock.service';
 import { CardComponent } from '../../shared/components/card/card.component';
 import { BadgeComponent } from '../../shared/components/badge/badge.component';
 import { RagIndicatorComponent } from '../../shared/components/rag-indicator/rag-indicator.component';

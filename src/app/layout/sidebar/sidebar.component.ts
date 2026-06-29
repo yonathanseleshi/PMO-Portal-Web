@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
-import { PmoMockService } from '../../core/services/pmo-mock.service';
+import { PmoMockService } from '../../services/pmo-mock.service';
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,

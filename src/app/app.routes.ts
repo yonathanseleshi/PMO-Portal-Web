@@ -1,28 +1,8 @@
 import { Routes } from '@angular/router';
 import { ShellComponent } from './layout/shell/shell.component';
-import { inject } from '@angular/core';
-import { CanActivateFn, Router } from '@angular/router';
-import { PmoMockService } from './core/services/pmo-mock.service';
-
-const authGuard: CanActivateFn = () => {
-  const pmoService = inject(PmoMockService);
-  const router = inject(Router);
-
-  if (pmoService.isLoggedIn()) {
-    return true;
-  }
-  return router.createUrlTree(['/login']);
-};
-
-const loginGuard: CanActivateFn = () => {
-  const pmoService = inject(PmoMockService);
-  const router = inject(Router);
-
-  if (!pmoService.isLoggedIn()) {
-    return true;
-  }
-  return router.createUrlTree(['/dashboard']);
-};
+import { authGuard, loginGuard } from './guards/auth.guard';
+import { roleGuard } from './guards/role.guard';
+import { UserRole } from './models/user-session.model';
 
 export const routes: Routes = [
   {
@@ -31,6 +11,8 @@ export const routes: Routes = [
     loadComponent: () => import('./features/login/login.component').then(m => m.LoginComponent)
   },
   {
+    // Application shell — renders (sidebar + header + copilot) only once the
+    // user is authenticated. All children inherit authentication protection.
     path: '',
     component: ShellComponent,
     canActivate: [authGuard],
@@ -57,11 +39,17 @@ export const routes: Routes = [
         loadComponent: () => import('./features/templates/template-library.component').then(m => m.TemplateLibraryComponent)
       },
       {
+        // Submissions queue is an operational PMO function.
         path: 'submissions',
+        canActivate: [roleGuard],
+        data: { roles: [UserRole.PMOLead, UserRole.PMOAnalyst] },
         loadComponent: () => import('./features/submissions/submissions.component').then(m => m.SubmissionsComponent)
       },
       {
+        // Governance Board views — PMO staff and Governance Board members.
         path: 'governance',
+        canActivate: [roleGuard],
+        data: { roles: [UserRole.PMOLead, UserRole.PMOAnalyst, UserRole.GovernanceBoard] },
         loadComponent: () => import('./features/governance/governance.component').then(m => m.GovernanceComponent)
       },
       {
@@ -69,8 +57,15 @@ export const routes: Routes = [
         loadComponent: () => import('./features/resources/resources.component').then(m => m.ResourcesComponent)
       },
       {
+        // System administration is restricted to the PMO Lead.
         path: 'admin',
+        canActivate: [roleGuard],
+        data: { roles: [UserRole.PMOLead] },
         loadComponent: () => import('./features/admin/admin.component').then(m => m.AdminComponent)
+      },
+      {
+        path: 'access-denied',
+        loadComponent: () => import('./features/access-denied/access-denied.component').then(m => m.AccessDeniedComponent)
       }
     ]
   },

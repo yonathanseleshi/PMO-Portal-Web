@@ -1,8 +1,8 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { PmoMockService } from '../../core/services/pmo-mock.service';
-import { Project } from '../../core/models/pmo.model';
+import { PmoMockService } from '../../services/pmo-mock.service';
+import { Project } from '../../models/pmo.model';
 import { CardComponent } from '../../shared/components/card/card.component';
 import { BadgeComponent } from '../../shared/components/badge/badge.component';
 import { PageHeaderComponent } from '../../shared/components/page-header/page-header.component';
