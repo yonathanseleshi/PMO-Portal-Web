@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Observable, of } from 'rxjs';
-import { TemplateDefinition } from '../models';
+import { TemplateDefinition, TemplateGuidance } from '../models';
 
 @Injectable({
   providedIn: 'root'
@@ -114,6 +114,128 @@ export class TemplatesService {
   getTemplateById(templateId: string): Observable<TemplateDefinition | undefined> {
     // TODO(api): Replace with HttpClient GET /api/templates/{templateId}
     return this.getTemplate(templateId);
+  }
+
+  /**
+   * Frontend-only instructional guidance per template, powering the Template
+   * Detail surface (PAGE-TEMPLATE-002). Sourced from the PMO operating model;
+   * not a backend entity (see {@link TemplateGuidance}).
+   */
+  private guidance: Record<string, TemplateGuidance> = {
+    'PMO-TPL-001': {
+      templateId: 'PMO-TPL-001',
+      purpose:
+        'Register a new technology request and capture enough context for the PMO to make a Gate 1 intake decision and assign a preliminary governance tier.',
+      whenToUse:
+        'Use at the very start, before any project work begins, whenever a department wants to initiate a new ITS project or significant change.',
+      gateContext:
+        'Supports Gate 1 — Intake Decision. An approved intake authorizes the request to proceed and, for Tier 1/2 work, to develop a charter.',
+      keySections: [
+        'Project information and sponsor',
+        'Business need and objectives',
+        'High-level scope (in and out)',
+        'Expected benefits and known risks',
+        'Constraints, dependencies, and timeline',
+        'Tier qualification and auto-trigger indicators',
+      ],
+      prepareBeforeSubmission: [
+        'Confirm an executive sponsor and their support',
+        'Run the Tier Calculator to estimate the governance tier',
+        'Note any ServiceNow ticket number associated with the request',
+        'Export your completed intake package to PDF to attach',
+      ],
+      submissionRoute: '/submissions/new/intake',
+    },
+    'PMO-TPL-002': {
+      templateId: 'PMO-TPL-002',
+      purpose:
+        'Formally authorize an approved project — defining purpose, scope boundaries, governance, ROM funding, and success criteria for a Gate 2 decision.',
+      whenToUse:
+        'Use after intake approval, when a project needs to be chartered and authorized to move into planning.',
+      gateContext:
+        'Supports Gate 2 — Charter Authorization. Approval confirms the tier and authorizes planning to begin.',
+      keySections: [
+        'Purpose, background, and objectives',
+        'Success metrics and scope boundaries',
+        'Major deliverables and governance structure',
+        'Assumptions, constraints, risks, and dependencies',
+        'ROM cost range and funding',
+        'Timeline, milestones, and business justification',
+      ],
+      prepareBeforeSubmission: [
+        'Link the charter to its approved intake / project where possible',
+        'Develop a rough order-of-magnitude (ROM) cost range',
+        'Confirm the funding source and status',
+        'Align the sponsor and project manager on scope and governance',
+      ],
+      submissionRoute: '/submissions/new/charter',
+    },
+    'PMO-TPL-003': {
+      templateId: 'PMO-TPL-003',
+      purpose:
+        'Confirm a solution is ready for production — validating testing, training, cutover, rollback, and security readiness.',
+      whenToUse: 'Use ahead of a release or go-live, before deploying to production.',
+      gateContext: 'Supports Gate 4 — Release Readiness. A Go decision authorizes deployment.',
+      keySections: [
+        'Testing and quality evidence',
+        'Training and operational readiness',
+        'Cutover and rollback plan',
+        'Security and compliance sign-off',
+      ],
+      prepareBeforeSubmission: [
+        'Gather test results and sign-offs',
+        'Confirm the rollback plan and support model',
+        'Complete the security review',
+      ],
+    },
+    'PMO-TPL-004': {
+      templateId: 'PMO-TPL-004',
+      purpose:
+        'Formally close a project — documenting acceptance, transition to operations, financial closeout, and lessons learned for a Gate 5 decision.',
+      whenToUse: 'Use when deliverables are complete and the project is ready to be accepted and closed.',
+      gateContext:
+        'Supports Gate 5 — Acceptance & Closure. Acceptance formally completes the project and transitions it to operations.',
+      keySections: [
+        'Final acceptance and outcome',
+        'Deliverables and quality evidence',
+        'Transition to operations',
+        'Benefits and outcomes',
+        'Financial and contract closeout',
+        'Lessons learned and closure recommendation',
+      ],
+      prepareBeforeSubmission: [
+        'Confirm formal user acceptance of deliverables',
+        'Reconcile final spend against budget',
+        'Capture lessons learned with the team',
+        'Confirm the operations team is ready to take over',
+      ],
+      submissionRoute: '/submissions/new/closure',
+    },
+    'PMO-TPL-005': {
+      templateId: 'PMO-TPL-005',
+      purpose: 'Track Risks, Assumptions, Issues, and Dependencies (RAID) throughout the project lifecycle.',
+      whenToUse: 'Use continuously from planning onward to manage and escalate project risks and issues.',
+      gateContext: 'Supports every gate as ongoing governance evidence; reviewed at each decision point.',
+      keySections: ['Risks', 'Assumptions', 'Issues', 'Dependencies', 'Decisions'],
+      prepareBeforeSubmission: [
+        'Keep the log current with owners and mitigations',
+        'Flag items needing PMO escalation',
+      ],
+    },
+    'PMO-TPL-006': {
+      templateId: 'PMO-TPL-006',
+      purpose:
+        'Record an official governance gate decision. Gate Decision Records are generated and maintained by the PMO.',
+      whenToUse: 'Reference after a gate review; the PMO records the decision and links the official record.',
+      gateContext: 'Documents the outcome of any gate review (G1–G5).',
+      keySections: ['Gate and project', 'Decision and conditions', 'Decision maker and date', 'Evidence links'],
+      prepareBeforeSubmission: ['Generated by the PMO — no submission required from requesters'],
+    },
+  };
+
+  /** Get the instructional guidance for a template (frontend-only). */
+  getTemplateGuidance(templateId: string): Observable<TemplateGuidance | undefined> {
+    return of(this.guidance[templateId]);
   }
 
   /**

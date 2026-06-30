@@ -9,6 +9,7 @@
 export * from './enums.model';
 export * from './project.model';
 export * from './submission.model';
+export * from './submission-form.model';
 export * from './status-report.model';
 export * from './governance.model';
 export * from './role-assignment.model';

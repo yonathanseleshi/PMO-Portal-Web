@@ -1,8 +1,15 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
+import { delay, tap } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
-import { Submission, SubmissionStatus, UpdateSubmissionStatusRequest } from '../../models';
+import {
+  CreateAnySubmissionRequest,
+  Submission,
+  SubmissionStatus,
+  SubmissionType,
+  UpdateSubmissionStatusRequest,
+} from '../../models';
 
 /**
  * SubmissionsService — typed access to the Wave 02 `/api/submissions` contract.
@@ -16,7 +23,7 @@ export class SubmissionsService {
   private http = inject(HttpClient);
   private readonly baseUrl = `${environment.apiBaseUrl}/submissions`;
 
-  private readonly mockSubmissions: Submission[] = [
+  private mockSubmissions: Submission[] = [
     {
       id: 'b1000000-0000-4000-8000-000000000001',
       referenceNumber: 'SUB-2026-0615-0042',
@@ -128,6 +135,92 @@ export class SubmissionsService {
       return this.http.get<Submission>(`${this.baseUrl}/${submissionId}`);
     }
     return of(this.mockSubmissions.find((s) => s.id === submissionId));
+  }
+
+  /**
+   * Receipt of the most recently created submission, used by the confirmation
+   * screen (PAGE-SUBMISSION-004) after a form is submitted. A signal so the
+   * receipt page can read it without threading the value through navigation
+   * state. Cleared after it is consumed.
+   */
+  private readonly lastCreated = signal<Submission | null>(null);
+  readonly lastReceipt = this.lastCreated.asReadonly();
+
+  /**
+   * POST /api/submissions — create a native submission (Intake/Charter/Closure).
+   *
+   * Wave 04 builds the contract-aligned request and, in mock mode, fabricates a
+   * server-shaped {@link Submission} (including a `SUB-{YYYY}-{MMDD}-{####}`
+   * reference number) so the receipt and PMO queue can render. Wave 05 wires the
+   * real POST plus attachment upload orchestration.
+   */
+  createSubmission(request: CreateAnySubmissionRequest): Observable<Submission> {
+    if (!environment.useMockData) {
+      // Wave 05: the API will accept the composed envelope + detail payload.
+      return this.http.post<Submission>(this.baseUrl, request).pipe(tap((s) => this.lastCreated.set(s)));
+    }
+
+    const submission = this.buildMockSubmission(request);
+    this.mockSubmissions = [submission, ...this.mockSubmissions];
+    // Simulate a brief network round-trip so the form's pending state is visible.
+    return of(submission).pipe(
+      delay(450),
+      tap((s) => this.lastCreated.set(s)),
+    );
+  }
+
+  /** Consume + clear the stored receipt (call once the receipt page has read it). */
+  consumeReceipt(): Submission | null {
+    const receipt = this.lastCreated();
+    this.lastCreated.set(null);
+    return receipt;
+  }
+
+  private gateForType(type: SubmissionType): number {
+    return type === 'Intake' ? 1 : type === 'Charter' ? 2 : 5;
+  }
+
+  /** Build a server-shaped Submission from a create request (mock mode only). */
+  private buildMockSubmission(request: CreateAnySubmissionRequest): Submission {
+    const now = new Date();
+    return {
+      id: `local-${now.getTime()}`,
+      referenceNumber: this.generateReferenceNumber(now),
+      type: request.type,
+      templateName: request.templateName ?? null,
+      gateNumber: request.gateNumber ?? this.gateForType(request.type),
+      projectId: request.projectId ?? null,
+      approvedProjectId: null,
+      projectTitle: request.projectTitle ?? null,
+      submitterName: request.submitterName ?? null,
+      submitterEmail: request.submitterEmail ?? null,
+      submitterDepartment: request.submitterDepartment ?? null,
+      submitterRole: request.submitterRole ?? null,
+      description: request.description ?? null,
+      priority: request.priority ?? null,
+      estimatedBudget: request.estimatedBudget ?? null,
+      serviceNowTicketNumber: request.serviceNowTicketNumber ?? null,
+      preliminaryTier: request.preliminaryTier ?? null,
+      confirmedTier: null,
+      fileName: request.fileName ?? null,
+      fileUrl: null,
+      submittedAt: now.toISOString(),
+      status: 'PendingReview',
+      reviewedByEmail: null,
+      reviewedAt: null,
+      reviewNotes: null,
+      returnedReason: null,
+      createdAt: now.toISOString(),
+      attachmentCount: request.fileName ? 1 : 0,
+    };
+  }
+
+  /** Mirrors the server format `SUB-{YYYY}-{MMDD}-{####}` (mock sequence). */
+  private generateReferenceNumber(now: Date): string {
+    const yyyy = now.getFullYear();
+    const mmdd = `${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
+    const seq = String((now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds()) % 10000).padStart(4, '0');
+    return `SUB-${yyyy}-${mmdd}-${seq}`;
   }
 
   /** PUT /api/submissions/{id}/status — contract-stable transition only. */

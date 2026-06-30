@@ -53,6 +53,40 @@ export const routes: Routes = [
         loadComponent: () => import('./features/templates/template-library.component').then(m => m.TemplateLibraryComponent),
       },
       {
+        path: 'templates/:id/instructions',
+        loadComponent: () => import('./features/templates/template-instructions.component').then(m => m.TemplateInstructionsComponent),
+      },
+      {
+        path: 'templates/:id',
+        loadComponent: () => import('./features/templates/template-detail.component').then(m => m.TemplateDetailComponent),
+      },
+      {
+        // Tier Calculator — available to all authenticated users (PAGE-GOV-002).
+        path: 'tier-calculator',
+        loadComponent: () => import('./features/tier-calculator/tier-calculator-page.component').then(m => m.TierCalculatorPageComponent),
+      },
+
+      // --- Native submission surfaces (all authenticated users) ------------
+      {
+        path: 'submissions/new/intake',
+        data: { submissionType: 'Intake' },
+        loadComponent: () => import('./features/submissions/forms/submission-form.component').then(m => m.SubmissionFormComponent),
+      },
+      {
+        path: 'submissions/new/charter',
+        data: { submissionType: 'Charter' },
+        loadComponent: () => import('./features/submissions/forms/submission-form.component').then(m => m.SubmissionFormComponent),
+      },
+      {
+        path: 'submissions/new/closure',
+        data: { submissionType: 'Closure' },
+        loadComponent: () => import('./features/submissions/forms/submission-form.component').then(m => m.SubmissionFormComponent),
+      },
+      {
+        path: 'submissions/receipt',
+        loadComponent: () => import('./features/submissions/receipt/submission-receipt.component').then(m => m.SubmissionReceiptComponent),
+      },
+      {
         // PMO Submissions Queue — operational PMO function.
         path: 'submissions',
         canActivate: [roleGuard],

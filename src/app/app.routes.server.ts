@@ -10,6 +10,15 @@ export const serverRoutes: ServerRoute[] = [
     renderMode: RenderMode.Server,
   },
   {
+    // Parameterized template routes render on demand (unknown ids at build time).
+    path: 'templates/:id/instructions',
+    renderMode: RenderMode.Server,
+  },
+  {
+    path: 'templates/:id',
+    renderMode: RenderMode.Server,
+  },
+  {
     path: '**',
     renderMode: RenderMode.Prerender,
   },

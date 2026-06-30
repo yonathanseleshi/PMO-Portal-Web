@@ -1,86 +1,83 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { PmoMockService } from '../../services/pmo-mock.service';
-import { CardComponent } from '../../shared/components/card/card.component';
-import { BadgeComponent } from '../../shared/components/badge/badge.component';
-import { PageHeaderComponent } from '../../shared/components/page-header/page-header.component';
+import { RouterLink } from '@angular/router';
+import { TemplatesService } from '../../services/templates/templates';
+import { TemplateDefinition } from '../../models';
+import {
+  BadgeComponent,
+  CardComponent,
+  PageHeaderComponent,
+  TierCalculatorComponent,
+} from '../../shared/components';
 
+/**
+ * Template Library (PAGE-TEMPLATE-001) — central, self-service catalogue of PMO
+ * templates with search, gate/tier filtering, per-template actions (Details,
+ * Instructions, Start Submission, Download), and an embedded Tier Calculator.
+ */
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'pmo-template-library',
-  imports: [CommonModule, FormsModule, CardComponent, BadgeComponent, PageHeaderComponent],
+  imports: [CommonModule, FormsModule, RouterLink, CardComponent, BadgeComponent, PageHeaderComponent, TierCalculatorComponent],
   templateUrl: './template-library.component.html',
-  styleUrl: './template-library.component.css'
+  styleUrl: './template-library.component.css',
 })
 export class TemplateLibraryComponent {
-  pmoService = inject(PmoMockService);
+  private templatesService = inject(TemplatesService);
 
-  // Calculator state signals
-  showCalculator = signal<boolean>(false);
-  budget = signal<number>(0);
-  impact = signal<string>('low');
-  integration = signal<string>('low');
-  calculatedTier = signal<number | null>(null);
+  /** Native submission routes by template id (Intake/Charter/Closure only). */
+  private readonly submissionRoutes: Record<string, string> = {
+    'PMO-TPL-001': '/submissions/new/intake',
+    'PMO-TPL-002': '/submissions/new/charter',
+    'PMO-TPL-004': '/submissions/new/closure',
+  };
 
-  templates = [
-    {
-      id: 'T-INTAKE',
-      name: 'Project Intake Template',
-      desc: 'Mandatory form to initiate any County technology project request. Captures general intent, sponsor, and estimated scale.',
-      requiredFor: 'All Tiers (1-3)',
-      downloadUrl: '#'
-    },
-    {
-      id: 'T-CHARTER',
-      name: 'Project Charter Template',
-      desc: 'Detailed authorization document specifying project scope, major milestones, key risks, resources, and administrative funding basis.',
-      requiredFor: 'Tiers 2 & 3',
-      downloadUrl: '#'
-    },
-    {
-      id: 'T-CLOSE',
-      name: 'Project Closure Template',
-      desc: 'Formal wrap-up packet including user acceptance confirmation, financial reconciliation, and final lessons learned.',
-      requiredFor: 'Tiers 2 & 3',
-      downloadUrl: '#'
+  readonly templates = signal<TemplateDefinition[]>([]);
+  readonly search = signal('');
+  readonly gateFilter = signal('all');
+  readonly tierFilter = signal('all');
+  readonly showCalculator = signal(false);
+
+  readonly gateOptions = computed(() => {
+    const gates = new Set<string>();
+    for (const t of this.templates()) {
+      if (t.gate) gates.add(t.gate);
     }
-  ];
+    return [...gates].sort();
+  });
 
-  constructor() {}
+  readonly filtered = computed(() => {
+    const term = this.search().trim().toLowerCase();
+    const gate = this.gateFilter();
+    const tier = this.tierFilter();
+    return this.templates().filter((t) => {
+      const matchesTerm =
+        !term ||
+        t.name.toLowerCase().includes(term) ||
+        t.id.toLowerCase().includes(term) ||
+        t.description.toLowerCase().includes(term);
+      const matchesGate = gate === 'all' || t.gate === gate;
+      const matchesTier = tier === 'all' || t.tierApplicability.includes(tier);
+      return matchesTerm && matchesGate && matchesTier;
+    });
+  });
 
-  calculateTier() {
-    const cost = this.budget();
-    const imp = this.impact();
-    const integ = this.integration();
-
-    let tier = 1;
-
-    // Financial trigger
-    if (cost > 1000000) {
-      tier = 3;
-    } else if (cost > 250000) {
-      tier = 2;
-    }
-
-    // Complexity triggers
-    if (imp === 'high' || integ === 'high') {
-      tier = Math.max(tier, 3);
-    } else if (imp === 'medium' || integ === 'medium') {
-      tier = Math.max(tier, 2);
-    }
-
-    this.calculatedTier.set(tier);
+  constructor() {
+    this.templatesService.getTemplates().subscribe((t) => this.templates.set(t));
   }
 
-  resetCalculator() {
-    this.budget.set(0);
-    this.impact.set('low');
-    this.integration.set('low');
-    this.calculatedTier.set(null);
+  submissionRouteFor(template: TemplateDefinition): string | null {
+    return template.submitEnabled ? (this.submissionRoutes[template.id] ?? null) : null;
   }
 
-  toggleCalculator() {
-    this.showCalculator.update(v => !v);
+  toggleCalculator(): void {
+    this.showCalculator.update((v) => !v);
+  }
+
+  resetFilters(): void {
+    this.search.set('');
+    this.gateFilter.set('all');
+    this.tierFilter.set('all');
   }
 }
