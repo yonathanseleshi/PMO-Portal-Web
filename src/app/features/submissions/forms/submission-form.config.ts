@@ -40,8 +40,28 @@ export interface SubmissionFormConfig {
   templateName: string;
   sections: FormSectionConfig[];
   guidance: SubmissionGuidanceConfig;
+  /** Attachment behavior. Defaults (single required PDF) apply when omitted. */
+  attachment?: AttachmentConfig;
   buildRequest: (value: Record<string, unknown>, fileName: string | null) => CreateAnySubmissionRequest;
 }
+
+/** Per-form attachment configuration (single PDF vs. multiple artifacts). */
+export interface AttachmentConfig {
+  /** Accept several files instead of a single PDF. */
+  multiple: boolean;
+  /** Label shown above the drop zone. */
+  label: string;
+  /** `accept` attribute / allowed extensions passed to `pmo-file-upload`. */
+  accept: string;
+  /** Whether at least one file is required to submit. */
+  required: boolean;
+  /** Message shown when the required-attachment rule is violated. */
+  errorMessage: string;
+}
+
+/** Broad allowed types for attestation planning artifacts. */
+const ATTESTATION_ACCEPT =
+  '.pdf,.xlsx,.xls,.pptx,.ppt,.docx,.doc,.mpp,.csv,.png,.jpg,.jpeg';
 
 // --- shared option sets -----------------------------------------------------
 
@@ -70,6 +90,17 @@ const CLOSURE_OUTCOME_OPTIONS = [
   { value: 'Cancelled', label: 'Cancelled' },
   { value: 'OnHold', label: 'On Hold' },
 ];
+
+const METHODOLOGY_OPTIONS = [
+  { value: 'Waterfall', label: 'Waterfall' },
+  { value: 'Agile', label: 'Agile' },
+  { value: 'Hybrid', label: 'Hybrid' },
+  { value: 'Iterative', label: 'Iterative' },
+  { value: 'Other', label: 'Other' },
+];
+
+const ATTESTATION_STATEMENT =
+  'I attest that a credible, complete project plan exists — including schedule, budget, risks, and readiness — and that this project is ready to proceed from planning into execution.';
 
 // --- coercion helpers -------------------------------------------------------
 
@@ -361,6 +392,96 @@ const CLOSURE_SECTIONS: FormSectionConfig[] = [
 ];
 
 // ============================================================================
+// ATTESTATION (Gate 3 — Planning Complete)
+// ============================================================================
+
+const ATTESTATION_SECTIONS: FormSectionConfig[] = [
+  {
+    id: 'project',
+    title: 'Project Identification',
+    description: 'Identify the project this attestation covers.',
+    fields: [
+      { key: 'projectTitle', label: 'Project Title', type: 'text', required: true, full: true },
+      { key: 'projectName', label: 'Project Name (as registered)', type: 'text', helper: 'Optional — if it differs from the title.' },
+      { key: 'projectTier', label: 'Project Tier', type: 'select', options: TIER_OPTIONS },
+      { key: 'department', label: 'Department', type: 'text' },
+      { key: 'division', label: 'Division', type: 'text' },
+      { key: 'executiveSponsor', label: 'Executive Sponsor', type: 'text' },
+      { key: 'serviceNowTicketNumber', label: 'ServiceNow Ticket #', type: 'text' },
+      { key: 'description', label: 'Short Description', type: 'textarea', full: true, rows: 2 },
+    ],
+  },
+  {
+    id: 'projectManager',
+    title: 'Project Manager',
+    description: 'The project manager accountable for the plan.',
+    fields: [
+      { key: 'pmName', label: 'Project Manager Name', type: 'text', required: true },
+      { key: 'pmEmail', label: 'Project Manager Email', type: 'email', required: true },
+      { key: 'submitterDepartment', label: 'Department', type: 'text' },
+      { key: 'submitterRole', label: 'Role', type: 'text', placeholder: 'e.g. Project Manager' },
+    ],
+  },
+  {
+    id: 'approach',
+    title: 'Planning Approach',
+    description: 'How the project was planned.',
+    fields: [
+      { key: 'methodology', label: 'Methodology', type: 'select', options: METHODOLOGY_OPTIONS },
+      { key: 'planningToolsUsed', label: 'Planning Tools Used', type: 'text', full: true, helper: 'e.g. MS Project, Jira, Smartsheet.' },
+    ],
+  },
+  {
+    id: 'artifacts',
+    title: 'Planning Artifacts Submitted',
+    description: 'Describe the planning artifacts attached to this attestation.',
+    fields: [
+      {
+        key: 'planningArtifactsSummary',
+        label: 'Planning Artifacts Summary',
+        type: 'textarea',
+        required: true,
+        full: true,
+        rows: 4,
+        helper: 'Summarize the attached artifacts (schedule, budget, RAID log, communications and resource plans).',
+      },
+    ],
+  },
+  {
+    id: 'readiness',
+    title: 'Readiness Summary',
+    fields: [
+      {
+        key: 'readinessSummary',
+        label: 'Readiness Summary',
+        type: 'textarea',
+        required: true,
+        full: true,
+        rows: 4,
+        helper: 'Summarize why the project is ready to proceed into execution.',
+      },
+    ],
+  },
+  {
+    id: 'notes',
+    title: 'Notes to PMO',
+    fields: [
+      { key: 'notesToPmo', label: 'Notes to PMO (optional)', type: 'textarea', full: true, rows: 3 },
+    ],
+  },
+  {
+    id: 'attestation',
+    title: 'PM Attestation',
+    description: 'Confirm the attestation and sign.',
+    fields: [
+      { key: 'pmAttestationConfirmed', label: ATTESTATION_STATEMENT, type: 'checkbox', required: true },
+      { key: 'pmSignatureName', label: 'Signature (type your full name)', type: 'text', required: true },
+      { key: 'pmSignatureDate', label: 'Signature Date', type: 'date', required: true },
+    ],
+  },
+];
+
+// ============================================================================
 // Registry
 // ============================================================================
 
@@ -508,6 +629,84 @@ export const SUBMISSION_FORMS: Record<SubmissionType, SubmissionFormConfig> = {
         feasibilityNotes: str(v['feasibilityNotes']),
         tierChanged: bool(v['tierChanged']),
         governanceNotes: str(v['governanceNotes']),
+      },
+    }),
+  },
+
+  Attestation: {
+    type: 'Attestation',
+    title: 'Planning Complete Attestation',
+    subtitle:
+      'Attest that a credible project plan exists at Gate 3 before proceeding from planning into execution.',
+    submitLabel: 'Submit Attestation',
+    breadcrumbLabel: 'Planning Complete Attestation',
+    gateLabel: 'Gate 3 · Planning Complete',
+    templateId: 'PMO-TPL-007',
+    templateName: 'Planning Complete Attestation',
+    sections: ATTESTATION_SECTIONS,
+    attachment: {
+      multiple: true,
+      label: 'Planning artifacts',
+      accept: ATTESTATION_ACCEPT,
+      required: true,
+      errorMessage: 'Attach at least one planning artifact to submit.',
+    },
+    guidance: {
+      heading: "You're attesting your plan is complete",
+      intro:
+        'This Gate 3 attestation confirms a credible project plan exists — schedule, budget, risks, and readiness — before execution begins.',
+      steps: [
+        { title: 'Complete the form', detail: 'Provide project identification, planning approach, artifacts, and readiness.' },
+        { title: 'Attach your artifacts', detail: 'Attach your planning artifacts — you can add several files of different formats.' },
+        { title: 'Attest and sign', detail: 'Confirm the attestation statement and sign with your name and date.' },
+        { title: 'Submit', detail: 'You\'ll get a reference number and a confirmation.' },
+      ],
+      tips: [
+        'Assemble your schedule, budget, RAID log, and comms/resource plans before you start.',
+        'Confirm your sponsor supports proceeding to execution.',
+        'Complete the readiness review with your team first.',
+      ],
+      whatNext: [
+        'You receive a confirmation with a reference number.',
+        'The PMO reviews the attestation and planning artifacts at Gate 3.',
+        'On approval, the project is authorized to move into execution.',
+      ],
+      attachmentNote:
+        'Attach your planning artifacts. Multiple files of various formats are allowed (PDF, Excel, Word, PowerPoint, MS Project, CSV, images), up to 25 MB each.',
+    },
+    buildRequest: (v, fileName) => ({
+      type: 'Attestation',
+      templateId: 'PMO-TPL-007',
+      templateName: 'Planning Complete Attestation',
+      gateNumber: 3,
+      projectId: str(v['projectId']),
+      projectTitle: str(v['projectTitle']),
+      description: str(v['description']),
+      serviceNowTicketNumber: str(v['serviceNowTicketNumber']),
+      submitterName: str(v['pmName']),
+      submitterEmail: str(v['pmEmail']),
+      submitterDepartment: str(v['submitterDepartment']),
+      submitterRole: str(v['submitterRole']),
+      preliminaryTier: (str(v['projectTier']) as ProjectTier | null) ?? null,
+      fileName,
+      detail: {
+        projectId: str(v['projectId']),
+        projectName: str(v['projectName']),
+        projectTier: (str(v['projectTier']) as ProjectTier | null) ?? null,
+        department: str(v['department']),
+        division: str(v['division']),
+        executiveSponsor: str(v['executiveSponsor']),
+        pmName: str(v['pmName']),
+        pmEmail: str(v['pmEmail']),
+        submissionDate: new Date().toISOString(),
+        methodology: str(v['methodology']),
+        planningToolsUsed: str(v['planningToolsUsed']),
+        planningArtifactsSummary: str(v['planningArtifactsSummary']),
+        readinessSummary: str(v['readinessSummary']),
+        notesToPmo: str(v['notesToPmo']),
+        pmAttestationConfirmed: bool(v['pmAttestationConfirmed']),
+        pmSignatureName: str(v['pmSignatureName']),
+        pmSignatureDate: str(v['pmSignatureDate']),
       },
     }),
   },

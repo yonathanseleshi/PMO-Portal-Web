@@ -26,10 +26,11 @@ import {
 export class TemplateLibraryComponent {
   private templatesService = inject(TemplatesService);
 
-  /** Native submission routes by template id (Intake/Charter/Closure only). */
+  /** Native submission routes by template id (Intake/Charter/Attestation/Closure). */
   private readonly submissionRoutes: Record<string, string> = {
     'PMO-TPL-001': '/submissions/new/intake',
     'PMO-TPL-002': '/submissions/new/charter',
+    'PMO-TPL-007': '/submissions/new/attestation',
     'PMO-TPL-004': '/submissions/new/closure',
   };
 

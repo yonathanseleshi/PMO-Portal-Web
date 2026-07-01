@@ -1,15 +1,27 @@
 import { Injectable, inject, signal } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { delay, tap } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import {
+  AttachmentDownloadUrl,
   CreateAnySubmissionRequest,
+  ReviewSubmissionRequest,
   Submission,
+  SubmissionAttachment,
+  SubmissionDetailResponse,
   SubmissionStatus,
   SubmissionType,
   UpdateSubmissionStatusRequest,
 } from '../../models';
+
+/** Filters accepted by the read/queue endpoints. */
+export interface SubmissionQueueFilters {
+  status?: SubmissionStatus | null;
+  type?: SubmissionType | null;
+  reviewer?: string | null;
+  maxAgeDays?: number | null;
+}
 
 /**
  * SubmissionsService — typed access to the Wave 02 `/api/submissions` contract.
@@ -116,12 +128,54 @@ export class SubmissionsService {
     },
   ];
 
-  /** GET /api/submissions — PMO queue. */
-  getSubmissions(): Observable<Submission[]> {
+  /** GET /api/submissions — PMO queue (optionally filtered). */
+  getSubmissions(filters?: SubmissionQueueFilters): Observable<Submission[]> {
     if (!environment.useMockData) {
-      return this.http.get<Submission[]>(this.baseUrl);
+      return this.http.get<Submission[]>(this.baseUrl, { params: this.toParams(filters) });
     }
-    return of(this.mockSubmissions);
+    return of(this.applyFilters(this.mockSubmissions, filters));
+  }
+
+  /**
+   * GET /api/submissions/queue — the triage queue with age-based prioritization.
+   * Mirrors {@link getSubmissions} but hits the dedicated queue endpoint and
+   * supports a `maxAgeDays` filter.
+   */
+  getQueue(filters?: SubmissionQueueFilters): Observable<Submission[]> {
+    if (!environment.useMockData) {
+      return this.http.get<Submission[]>(`${this.baseUrl}/queue`, { params: this.toParams(filters) });
+    }
+    const withAge = this.mockSubmissions.map((s) => ({ ...s, ageInDays: this.ageInDays(s.submittedAt) }));
+    let result = this.applyFilters(withAge, filters);
+    if (filters?.maxAgeDays != null) {
+      result = result.filter((s) => (s.ageInDays ?? 0) <= filters.maxAgeDays!);
+    }
+    return of(result);
+  }
+
+  /** Build query params from the queue filters (omitting empty values). */
+  private toParams(filters?: SubmissionQueueFilters): HttpParams {
+    let params = new HttpParams();
+    if (filters?.status) params = params.set('status', filters.status);
+    if (filters?.type) params = params.set('type', filters.type);
+    if (filters?.reviewer) params = params.set('reviewer', filters.reviewer);
+    if (filters?.maxAgeDays != null) params = params.set('maxAgeDays', String(filters.maxAgeDays));
+    return params;
+  }
+
+  /** Client-side filtering over the mock set (mirrors the server filters). */
+  private applyFilters(source: Submission[], filters?: SubmissionQueueFilters): Submission[] {
+    return source.filter((s) => {
+      if (filters?.status && s.status !== filters.status) return false;
+      if (filters?.type && s.type !== filters.type) return false;
+      if (filters?.reviewer && s.assignedReviewerEmail !== filters.reviewer) return false;
+      return true;
+    });
+  }
+
+  private ageInDays(submittedAt: string): number {
+    const ms = Date.now() - new Date(submittedAt).getTime();
+    return Math.max(0, Math.floor(ms / (1000 * 60 * 60 * 24)));
   }
 
   /** GET /api/submissions filtered by status (client-side over the mock set). */
@@ -156,8 +210,10 @@ export class SubmissionsService {
    */
   createSubmission(request: CreateAnySubmissionRequest): Observable<Submission> {
     if (!environment.useMockData) {
-      // Wave 05: the API will accept the composed envelope + detail payload.
-      return this.http.post<Submission>(this.baseUrl, request).pipe(tap((s) => this.lastCreated.set(s)));
+      // Route to the per-type endpoint (/submissions/{type-lowercase}); the API
+      // accepts the composed envelope + detail payload.
+      const url = `${this.baseUrl}/${request.type.toLowerCase()}`;
+      return this.http.post<Submission>(url, request).pipe(tap((s) => this.lastCreated.set(s)));
     }
 
     const submission = this.buildMockSubmission(request);
@@ -177,7 +233,16 @@ export class SubmissionsService {
   }
 
   private gateForType(type: SubmissionType): number {
-    return type === 'Intake' ? 1 : type === 'Charter' ? 2 : 5;
+    switch (type) {
+      case 'Intake':
+        return 1;
+      case 'Charter':
+        return 2;
+      case 'Attestation':
+        return 3;
+      case 'Closure':
+        return 5;
+    }
   }
 
   /** Build a server-shaped Submission from a create request (mock mode only). */
@@ -238,5 +303,108 @@ export class SubmissionsService {
       submission.returnedReason = request.returnedReason ?? submission.returnedReason;
     }
     return of(submission);
+  }
+
+  // --------------------------------------------------------------------------
+  // Review & detail (Wave 05)
+  // --------------------------------------------------------------------------
+
+  /** POST /api/submissions/{id}/review — record a review decision. */
+  reviewSubmission(submissionId: string, request: ReviewSubmissionRequest): Observable<Submission | undefined> {
+    if (!environment.useMockData) {
+      return this.http.post<Submission>(`${this.baseUrl}/${submissionId}/review`, request);
+    }
+    const submission = this.mockSubmissions.find((s) => s.id === submissionId);
+    if (submission) {
+      submission.status = request.decision;
+      submission.reviewNotes = request.reviewNotes ?? submission.reviewNotes;
+      submission.returnedReason = request.returnedReason ?? submission.returnedReason;
+      submission.assignedReviewerEmail = request.assignedReviewerEmail ?? submission.assignedReviewerEmail;
+      submission.reviewedAt = request.decision === 'UnderReview' ? submission.reviewedAt : new Date().toISOString();
+    }
+    return of(submission);
+  }
+
+  /** GET /api/submissions/{id}/detail — full submission + typed detail + attachments. */
+  getSubmissionDetail(submissionId: string): Observable<SubmissionDetailResponse | undefined> {
+    if (!environment.useMockData) {
+      return this.http.get<SubmissionDetailResponse>(`${this.baseUrl}/${submissionId}/detail`);
+    }
+    const submission = this.mockSubmissions.find((s) => s.id === submissionId);
+    if (!submission) return of(undefined);
+    return of({ submission, attachments: this.mockAttachmentsFor(submission) });
+  }
+
+  // --------------------------------------------------------------------------
+  // Attachments (Wave 05)
+  // --------------------------------------------------------------------------
+
+  /** GET /api/submissions/{id}/attachments. */
+  getAttachments(submissionId: string): Observable<SubmissionAttachment[]> {
+    if (!environment.useMockData) {
+      return this.http.get<SubmissionAttachment[]>(`${this.baseUrl}/${submissionId}/attachments`);
+    }
+    const submission = this.mockSubmissions.find((s) => s.id === submissionId);
+    return of(submission ? this.mockAttachmentsFor(submission) : []);
+  }
+
+  /**
+   * POST /api/submissions/{id}/attachments/upload — multipart upload of a single
+   * file (field name `file`, optional `documentType`).
+   */
+  uploadAttachment(
+    submissionId: string,
+    file: File,
+    documentType?: string | null,
+  ): Observable<SubmissionAttachment> {
+    if (!environment.useMockData) {
+      const form = new FormData();
+      form.append('file', file, file.name);
+      if (documentType) form.append('documentType', documentType);
+      return this.http.post<SubmissionAttachment>(`${this.baseUrl}/${submissionId}/attachments/upload`, form);
+    }
+    const attachment: SubmissionAttachment = {
+      id: `att-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+      submissionId,
+      fileName: file.name,
+      contentType: file.type || null,
+      fileSizeBytes: file.size,
+      documentType: documentType ?? null,
+      uploadedByEmail: null,
+      uploadedAt: new Date().toISOString(),
+      uploadStatus: 'Completed',
+      isActive: true,
+    };
+    return of(attachment).pipe(delay(200));
+  }
+
+  /** GET /api/submissions/{id}/attachments/{attachmentId}/download-url. */
+  getAttachmentDownloadUrl(submissionId: string, attachmentId: string): Observable<AttachmentDownloadUrl> {
+    if (!environment.useMockData) {
+      return this.http.get<AttachmentDownloadUrl>(
+        `${this.baseUrl}/${submissionId}/attachments/${attachmentId}/download-url`,
+      );
+    }
+    return of({
+      url: `https://sharepoint.venturacounty.gov/teams/pmo/Submissions/${attachmentId}`,
+      expiresAt: new Date(Date.now() + 15 * 60 * 1000).toISOString(),
+    }).pipe(delay(150));
+  }
+
+  /** Fabricate contract-shaped attachment metadata for a mock submission. */
+  private mockAttachmentsFor(submission: Submission): SubmissionAttachment[] {
+    if (!submission.attachmentCount) return [];
+    return Array.from({ length: submission.attachmentCount }, (_, i) => ({
+      id: `${submission.id}-att-${i + 1}`,
+      submissionId: submission.id,
+      fileName: submission.fileName ?? `${submission.referenceNumber}-${i + 1}.pdf`,
+      contentType: 'application/pdf',
+      fileSizeBytes: 128000,
+      documentType: submission.type,
+      uploadedByEmail: submission.submitterEmail,
+      uploadedAt: submission.submittedAt,
+      uploadStatus: 'Completed',
+      isActive: true,
+    }));
   }
 }

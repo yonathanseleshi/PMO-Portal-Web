@@ -87,6 +87,28 @@ export interface CharterSubmissionDetailRequest {
   governanceNotes?: string | null;
 }
 
+// --- Gate 3 Attestation detail (mirror of AttestationSubmissionDetail) ------
+
+export interface AttestationSubmissionDetailRequest {
+  projectId?: string | null;
+  projectName?: string | null;
+  projectTier?: ProjectTier | null;
+  department?: string | null;
+  division?: string | null;
+  executiveSponsor?: string | null;
+  pmName?: string | null;
+  pmEmail?: string | null;
+  submissionDate?: string | null;
+  methodology?: string | null;
+  planningToolsUsed?: string | null;
+  planningArtifactsSummary?: string | null;
+  readinessSummary?: string | null;
+  notesToPmo?: string | null;
+  pmAttestationConfirmed: boolean;
+  pmSignatureName?: string | null;
+  pmSignatureDate?: string | null;
+}
+
 // --- Gate 5 Closure detail (mirror of ClosureSubmissionDetail) --------------
 
 export interface ClosureSubmissionDetailRequest {
@@ -116,6 +138,11 @@ export interface CreateCharterSubmissionRequest extends CreateSubmissionRequest 
   detail: CharterSubmissionDetailRequest;
 }
 
+export interface CreateAttestationSubmissionRequest extends CreateSubmissionRequest {
+  type: 'Attestation';
+  detail: AttestationSubmissionDetailRequest;
+}
+
 export interface CreateClosureSubmissionRequest extends CreateSubmissionRequest {
   type: 'Closure';
   detail: ClosureSubmissionDetailRequest;
@@ -124,6 +151,7 @@ export interface CreateClosureSubmissionRequest extends CreateSubmissionRequest 
 export type CreateAnySubmissionRequest =
   | CreateIntakeSubmissionRequest
   | CreateCharterSubmissionRequest
+  | CreateAttestationSubmissionRequest
   | CreateClosureSubmissionRequest;
 
 // --- Tier Calculator (frontend-only; mirrors TierTrigger / TierDefinition) --

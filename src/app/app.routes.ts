@@ -78,6 +78,11 @@ export const routes: Routes = [
         loadComponent: () => import('./features/submissions/forms/submission-form.component').then(m => m.SubmissionFormComponent),
       },
       {
+        path: 'submissions/new/attestation',
+        data: { submissionType: 'Attestation' },
+        loadComponent: () => import('./features/submissions/forms/submission-form.component').then(m => m.SubmissionFormComponent),
+      },
+      {
         path: 'submissions/new/closure',
         data: { submissionType: 'Closure' },
         loadComponent: () => import('./features/submissions/forms/submission-form.component').then(m => m.SubmissionFormComponent),

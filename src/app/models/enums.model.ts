@@ -82,7 +82,7 @@ export type GateDecision =
 
 // --- Submissions & Forms ---------------------------------------------------
 
-export type SubmissionType = 'Intake' | 'Charter' | 'Closure';
+export type SubmissionType = 'Intake' | 'Charter' | 'Attestation' | 'Closure';
 
 export type SubmissionStatus =
   | 'PendingReview'
@@ -121,4 +121,32 @@ export const RAG_TONE: Record<HealthRag, 'success' | 'warning' | 'danger'> = {
   Green: 'success',
   Yellow: 'warning',
   Red: 'danger',
+};
+
+/** Human-readable submission type labels. */
+export const SUBMISSION_TYPE_LABELS: Record<SubmissionType, string> = {
+  Intake: 'Intake',
+  Charter: 'Charter',
+  Attestation: 'Planning Complete Attestation',
+  Closure: 'Closure',
+};
+
+/** Human-readable submission status labels (governance vocabulary). */
+export const SUBMISSION_STATUS_LABELS: Record<SubmissionStatus, string> = {
+  PendingReview: 'Pending Review',
+  UnderReview: 'Under Review',
+  Approved: 'Approved',
+  Returned: 'Returned',
+  Deferred: 'Deferred',
+  Rejected: 'Rejected',
+};
+
+/** Maps a submission status to the design-system badge tone. */
+export const SUBMISSION_STATUS_TONE: Record<SubmissionStatus, 'success' | 'warning' | 'danger' | 'info' | 'default'> = {
+  PendingReview: 'warning',
+  UnderReview: 'info',
+  Approved: 'success',
+  Returned: 'danger',
+  Deferred: 'default',
+  Rejected: 'danger',
 };
